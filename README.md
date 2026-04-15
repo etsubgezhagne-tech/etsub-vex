@@ -25,6 +25,7 @@ Copy and paste these commands one by one in your terminal:
 🔧pkg update && pkg upgrade -y
 🔧pkg install python git -y
 🔧git clone [https://github.com/etsubgezhagne-tech/etsub-vex.git](https://github.com/etsubgezhagne-tech/etsub-vex.git)
+🔧pip install requests beautifulsoup4 rich
 🔧cd etsub-vex && pip install -r requirements.txt
 🔧python etsub_vex.py
 
