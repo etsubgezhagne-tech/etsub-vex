@@ -8,10 +8,14 @@
 - **Risk Scoring:** Automated vulnerability impact analysis.
 
 ## 🚀 Quick Setup
+
+Copy and paste these commands one by one in your terminal:
+
+**1. System Update & Dependencies**
 ```bash
-pkg install python git -y
-git clone [https://github.com/etsubgezhagne-tech/etsub-vex](https://github.com/etsubgezhagne-tech/etsub-vex)
-cd etsub-vex
-pip install -r requirements.txt
-python etsub_vex.py
+🔧pkg update && pkg upgrade -y
+🔧pkg install python git -y
+🔧git clone [https://github.com/etsubgezhagne-tech/etsub-vex.git](https://github.com/etsubgezhagne-tech/etsub-vex.git)
+🔧cd etsub-vex && pip install -r requirements.txt
+🔧python etsub_vex.py
 
