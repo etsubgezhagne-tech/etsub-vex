@@ -1,9 +1,10 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="etsub-vex/Screenshot_20260415-191440.png" width="45%" />
-  <img src="etsub-vex/Screenshot_20260415-191510.png" width="45%" />
+  <img src="https://raw.githubusercontent.com/etsubgezhagne-tech/etsub-vex/main/etsub-vex/Screenshot_20260415-191440.png" width="45%" />
+  <img src="https://raw.githubusercontent.com/etsubgezhagne-tech/etsub-vex/main/etsub-vex/Screenshot_20260415-191510.png" width="45%" />
 </p>
+
 # 🛡️ VEX HUNTER v7.0
 **Vex Hunter** is a modern security auditing framework designed for Ethical Hackers. It provides a comprehensive suite of tools for vulnerability assessment with a high-end terminal UI.
 
