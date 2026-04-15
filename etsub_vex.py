@@ -1,127 +1,175 @@
+import requests
+import re
 import os
 import time
-import requests
-import json
-import socket
-import random
-from datetime import datetime
+from bs4 import BeautifulSoup
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.text import Text
-import pyfiglet
 
 console = Console()
-
-# --- ⚙️ CONFIGURATION (USER MUST FILL THIS) ---
-# For GitHub safety, tokens are removed. 
-# Users should edit these lines before running.
-TOKEN = "ENTER_YOUR_BOT_TOKEN_HERE"
-CHAT_ID = "ENTER_YOUR_CHAT_ID_HERE"
-# ----------------------------------------------
 
 class VexHunter:
     def __init__(self):
         self.name = "VEX"
-        self.version = "7.0 PUBLIC"
-        self.report_log = ""
+        self.author = "Vex"
+        self.version = "7.5 PRO"
 
     def clear(self):
         os.system('clear' if os.name == 'posix' else 'cls')
 
     def banner(self):
-        ascii_banner = pyfiglet.figlet_format(self.name, font="slant")
-        styled_banner = Text(ascii_banner, style="bold bright_cyan")
-        return Panel(styled_banner, subtitle=f"[bold white]{self.version} | Open Source Auditing Tool[/]", border_style="bright_magenta")
+        banner_text = Text(f"""
+        ██╗   ██╗███████╗██╗  ██╗
+        ██║   ██║██╔════╝╚██╗██╔╝
+        ██║   ██║█████╗   ╚███╔╝ 
+        ╚██╗ ██╔╝██╔══╝   ██╔██╗ 
+         ╚████╔╝ ███████╗██╔╝ ██╗
+          ╚═══╝  ╚══════╝╚═╝  ╚═╝
+        """, style="bold bright_cyan")
+        console.print(Panel(banner_text, subtitle=f"[bold white]Created by: {self.author} | v{self.version}", border_style="magenta"))
 
-    def matrix_animation(self):
-        chars = ["0", "1", "V", "E", "X", "7", "#", "@", "&", "*"]
-        console.print("[bold green]Initializing VEX Framework...[/]")
-        for _ in range(25):
-            line = "".join(random.choice(chars) for _ in range(os.get_terminal_size().columns))
-            console.print(Text(line, style="dim green"), end="\r")
-            time.sleep(0.04)
+    # --- 🔍 NEW VULNERABILITY MODULES ---
 
-    def send_telegram(self, msg):
-        if "ENTER_YOUR" in TOKEN:
-            console.print("\n[bold yellow][!] Skipping Telegram: Token not configured.[/]")
-            return
-            
-        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-        data = {"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"}
+    def robots_check(self, url):
         try:
-            requests.post(url, data=data, timeout=10)
-            console.print("\n[bold cyan][✔] SUCCESS: Report Sent to Telegram![/]")
-        except:
-            console.print("\n[bold red][!] ERROR: Telegram API unreachable.[/]")
+            r = requests.get(f"{url}/robots.txt", timeout=5)
+            return "[✔] Found" if r.status_code == 200 else "[✘] Not Found"
+        except: return "[!] Error"
+
+    def sitemap_check(self, url):
+        try:
+            r = requests.get(f"{url}/sitemap.xml", timeout=5)
+            return "[✔] Found" if r.status_code == 200 else "[✘] Not Found"
+        except: return "[!] Error"
+
+    def dir_listing(self, url):
+        try:
+            r = requests.get(url, timeout=5)
+            return "[!] Active" if "Index of /" in r.text else "[✔] Safe"
+        except: return "[!] Error"
+
+    def env_check(self, url):
+        try:
+            r = requests.get(f"{url}/.env", timeout=5)
+            return "[🔥] VULNERABLE" if r.status_code == 200 else "[✔] Safe"
+        except: return "[!] Error"
+
+    def debug_check(self, url):
+        paths = ["/_debug", "/phpinfo.php", "/config.php.bak"]
+        for p in paths:
+            try:
+                if requests.get(url+p, timeout=3).status_code == 200: return "[🔥] Exposed"
+            except: continue
+        return "[✔] Safe"
+
+    def cors_check(self, url):
+        try:
+            headers = {'Origin': 'https://evil.com'}
+            r = requests.get(url, headers=headers, timeout=5)
+            return "[!] Weak" if r.headers.get('Access-Control-Allow-Origin') == '*' else "[✔] Secure"
+        except: return "[!] Error"
+
+    def clickjacking_check(self, headers):
+        if "X-Frame-Options" not in headers: return "[🔥] Vulnerable"
+        return "[✔] Secure"
+
+    def open_redirect(self, url):
+        payload = "/redirect?url=https://evil.com"
+        try:
+            r = requests.get(url+payload, timeout=5)
+            return "[!] Potential" if "evil.com" in r.url else "[✔] Safe"
+        except: return "[!] Error"
+
+    def backup_check(self, url):
+        backups = [".zip", ".tar.gz", ".bak"]
+        return "[?] Manual check needed"
+
+    def server_leak(self, headers):
+        return headers.get('Server', 'Hidden')
+
+    # --- 🛡️ MAIN SCANNER ENGINE ---
 
     def run_full_scan(self, target):
         self.clear()
-        console.print(self.banner())
+        self.banner()
+        if not target.startswith("http"): target = "https://" + target
         
-        if not target.startswith("http"):
-            target = "https://" + target
+        console.print(f"[bold yellow][*] Initializing Advanced Scan for: {target}[/]\n")
         
-        host = target.replace("https://", "").replace("http://", "").split('/')[0]
-        self.report_log = f"🛡️ *VEX HUNTER v7.0 REPORT*\n\n"
-        self.report_log += f"🌐 *Target:* {target}\n"
-        self.report_log += f"📅 *Date:* {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        self.report_log += "--------------------------\n"
-
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[bold magenta]{task.description}"),
-            BarColumn(bar_width=40, pulse_style="bright_cyan"),
-            TextColumn("[bold yellow]{task.percentage:>3.0f}%"),
-        ) as progress:
+        try:
+            res = requests.get(target, timeout=10)
+            headers = res.headers
             
-            t1 = progress.add_task("Core Recon: DNS & Headers...", total=100)
-            try:
-                ip = socket.gethostbyname(host)
-                r = requests.get(target, timeout=10)
-                self.report_log += f"📍 IP: `{ip}`\n📊 Status: {r.status_code}\n"
-                progress.update(t1, completed=100)
-            except:
-                progress.update(t1, completed=100)
+            table = Table(title="[bold cyan]Vex Hunter Scan Results[/]", show_header=True, header_style="bold magenta")
+            table.add_column("Module", style="dim")
+            table.add_column("Result", justify="right")
 
-            t2 = progress.add_task("Advanced: Vulnerability Probing...", total=100)
-            time.sleep(2)
-            progress.update(t2, completed=100)
+            with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), transient=True) as progress:
+                t1 = progress.add_task("[cyan]Scanning Infrastructure...", total=10)
+                
+                # Running checks
+                table.add_row("Server Information", self.server_leak(headers))
+                progress.update(t1, advance=1)
+                
+                table.add_row("Robots.txt", self.robots_check(target))
+                progress.update(t1, advance=1)
+                
+                table.add_row("Sitemap.xml", self.sitemap_check(target))
+                progress.update(t1, advance=1)
+                
+                table.add_row("Directory Listing", self.dir_listing(target))
+                progress.update(t1, advance=1)
+                
+                table.add_row(".env Exposure", self.env_check(target))
+                progress.update(t1, advance=1)
+                
+                table.add_row("Debug/PHP Info", self.debug_check(target))
+                progress.update(t1, advance=1)
+                
+                table.add_row("CORS Policy", self.cors_check(target))
+                progress.update(t1, advance=1)
+                
+                table.add_row("Clickjacking (XFO)", self.clickjacking_check(headers))
+                progress.update(t1, advance=1)
+                
+                table.add_row("Open Redirect", self.open_redirect(target))
+                progress.update(t1, advance=1)
+                
+                table.add_row("Backup Files", self.backup_check(target))
+                progress.update(t1, advance=1)
 
-            t3 = progress.add_task("Pro: Risk Scoring...", total=100)
-            time.sleep(1)
-            risk = random.randint(20, 90)
-            self.report_log += f"⚠️ *Risk Score:* {risk}/100\n"
-            progress.update(t3, completed=100)
+            console.print(table)
+            console.print(f"\n[bold green][✔] Scan Complete, {self.author}![/]")
+            input("\nPress Enter to return to menu...")
 
-        summary = Table(title="VEX SCAN DASHBOARD", border_style="bright_magenta")
-        summary.add_column("Module", style="cyan")
-        summary.add_column("Status", style="white")
-        summary.add_row("Passive Recon", "Complete")
-        summary.add_row("Telegram Sync", "Active" if "ENTER" not in TOKEN else "Disabled")
-        console.print(Panel(summary, border_style="bright_blue"))
+        except Exception as e:
+            console.print(f"[bold red][-] Error connecting to target: {e}[/]")
+            time.sleep(3)
 
-        self.send_telegram(self.report_log)
-
-    def menu(self):
+    def main_menu(self):
         while True:
             self.clear()
-            console.print(self.banner())
-            console.print("\n[bold bright_cyan][1][/] Start Security Scan")
-            console.print("[bold bright_cyan][0][/] Exit")
+            self.banner()
+            print("\n[ 1 ] Advanced Web Scan")
+            print("[ 2 ] About Developer")
+            print("[ 0 ] Exit")
             
-            cmd = console.input(f"\n[bold bright_magenta]{self.name}@Hunter:~# [/]")
+            choice = input(f"\n{self.author}@hunter:~$ ")
             
-            if cmd == "1":
-                target = console.input("[bold yellow]Target URL: [/]")
+            if choice == "1":
+                target = input("\nEnter Target URL (e.g., example.com): ")
                 self.run_full_scan(target)
-                console.input("\n[dim]Press Enter to return...[/]")
-            elif cmd == "0":
+            elif choice == "2":
+                self.clear()
+                self.banner()
+                console.print(Panel(f"Vex Hunter is a security tool developed by [bold cyan]{self.author}[/].\nFocus: Web Vulnerability Assessment.", title="Developer Info"))
+                input("\nPress Enter to return...")
+            elif choice == "0":
                 break
 
 if __name__ == "__main__":
-    v = VexHunter()
-    v.matrix_animation()
-    v.menu()
-
+    app = VexHunter()
+    app.main_menu()
