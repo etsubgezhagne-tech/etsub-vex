@@ -1,8 +1,8 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="Screenshot_20260415-191440.png" width="45%" alt="Vex Hunter 1" />
-  <img src="Screenshot_20260415-191510.png" width="45%" alt="Vex Hunter 2" />
+  <img src="Screenshot_20260415-191440.png" width="45%" />
+  <img src="Screenshot_20260415-191510.png" width="45%" />
 </p>
 # 🛡️ VEX HUNTER v7.0
 **Vex Hunter** is a modern security auditing framework designed for Ethical Hackers. It provides a comprehensive suite of tools for vulnerability assessment with a high-end terminal UI.
